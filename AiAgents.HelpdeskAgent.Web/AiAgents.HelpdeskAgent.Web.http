@@ -1,0 +1,6 @@
+@AiAgents.HelpdeskAgent.Web_HostAddress = http://localhost:5277
+
+GET {{AiAgents.HelpdeskAgent.Web_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

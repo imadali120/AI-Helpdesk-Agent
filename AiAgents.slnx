@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="AiAgents.Core/AiAgents.Core.csproj" />
+  <Project Path="AiAgents.HelpdeskAgent.Web/AiAgents.HelpdeskAgent.Web.csproj" />
+  <Project Path="AiAgents.HelpdeskAgent/AiAgents.HelpdeskAgent.csproj" />
+</Solution>
