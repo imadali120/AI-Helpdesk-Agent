@@ -37,9 +37,7 @@ public class TicketProcessingAgentRunner
         AgentDecision decision;
         SupportTeam? team = null;
 
-        // If key info is missing:
-        // - ask user if enabled
-        // - otherwise send to review (safe default)
+        
         if (classification.MissingFields.Length > 0)
         {
             decision = settings.EnableAutoAskClarifyingQuestions

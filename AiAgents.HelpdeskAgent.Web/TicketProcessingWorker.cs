@@ -20,6 +20,8 @@ public class TicketProcessingWorker : BackgroundService
             var runner = scope.ServiceProvider.GetRequiredService<TicketProcessingAgentRunner>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<TicketProcessingWorker>>();
 
+            logger.LogInformation("Background worker tick executing at {Time}", DateTime.UtcNow);
+
             try
             {
                 var result = await runner.StepAsync(stoppingToken);
@@ -28,6 +30,10 @@ public class TicketProcessingWorker : BackgroundService
                     logger.LogInformation(
                         "Processed Ticket {TicketId} Decision={Decision} NewStatus={NewStatus} Category={Category} Priority={Priority} Team={Team} Confidence={Confidence}",
                         result.TicketId, result.Decision, result.NewStatus, result.Category, result.Priority, result.Team, result.Confidence);
+                }
+                else
+                {
+                    logger.LogDebug("No tickets in queue, waiting for next tick");
                 }
             }
             catch (Exception ex)
@@ -39,4 +45,3 @@ public class TicketProcessingWorker : BackgroundService
         }
     }
 }
-
