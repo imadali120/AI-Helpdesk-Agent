@@ -25,8 +25,9 @@ builder.Services.AddScoped<DatabaseSeeder>();
 builder.Services.AddScoped<ITicketQueueService, TicketQueueService>();
 builder.Services.AddScoped<IClassificationService, ClassificationService>();
 builder.Services.AddScoped<IRoutingService, RoutingService>();
-builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<ISettingsProvider, DbSettingsProvider>();
+builder.Services.AddScoped<ILearningService, LearningService>();  // Must be before FeedbackService
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<TicketProcessingAgentRunner>();
 
 // Register Background Worker

@@ -8,17 +8,20 @@ public class TicketProcessingAgentRunner
     private readonly IClassificationService _classificationService;
     private readonly IRoutingService _routingService;
     private readonly ISettingsProvider _settingsProvider;
+    private readonly ILearningService _learningService;
 
     public TicketProcessingAgentRunner(
         ITicketQueueService ticketQueueService,
         IClassificationService classificationService,
         IRoutingService routingService,
-        ISettingsProvider settingsProvider)
+        ISettingsProvider settingsProvider,
+        ILearningService learningService)
     {
         _ticketQueueService = ticketQueueService ?? throw new ArgumentNullException(nameof(ticketQueueService));
         _classificationService = classificationService ?? throw new ArgumentNullException(nameof(classificationService));
         _routingService = routingService ?? throw new ArgumentNullException(nameof(routingService));
         _settingsProvider = settingsProvider ?? throw new ArgumentNullException(nameof(settingsProvider));
+        _learningService = learningService ?? throw new ArgumentNullException(nameof(learningService));
     }
 
     public async Task<TicketProcessingTickResult?> StepAsync(CancellationToken ct)
@@ -34,18 +37,22 @@ public class TicketProcessingAgentRunner
         var settings = await _settingsProvider.GetSettingsAsync(ct);
         var classification = _classificationService.Classify(ticket, settings);
 
+        // Get category-specific threshold from learning service (uses feedback history)
+        var effectiveThreshold = await _learningService.GetEffectiveThresholdAsync(classification.Category, ct);
+
         AgentDecision decision;
         SupportTeam? team = null;
 
-        
+
         if (classification.MissingFields.Length > 0)
         {
             decision = settings.EnableAutoAskClarifyingQuestions
                 ? AgentDecision.AskedForInfo
                 : AgentDecision.SentToReview;
         }
-        else if (classification.Confidence < settings.ConfidenceThreshold)
+        else if (classification.Confidence < effectiveThreshold)
         {
+            // Use learned threshold per category instead of global threshold
             decision = AgentDecision.SentToReview;
         }
         else if (settings.EnableAutoAssign)
@@ -112,9 +119,9 @@ public class TicketProcessingAgentRunner
                     reasonText =
                         $"Missing required fields ({string.Join(", ", classification.MissingFields)}) and auto-ask is disabled.";
                 }
-                else if (classification.Confidence < settings.ConfidenceThreshold)
+                else if (classification.Confidence < effectiveThreshold)
                 {
-                    reasonText = $"Low confidence ({classification.Confidence:F2} < {settings.ConfidenceThreshold:F2}).";
+                    reasonText = $"Low confidence ({classification.Confidence:F2} < {effectiveThreshold:F2} for {classification.Category}).";
                 }
                 else if (!settings.EnableAutoAssign)
                 {

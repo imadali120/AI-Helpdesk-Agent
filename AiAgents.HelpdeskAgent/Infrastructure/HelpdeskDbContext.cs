@@ -14,6 +14,8 @@ public class HelpdeskDbContext : DbContext
     public DbSet<TicketEvent> TicketEvents { get; set; } = null!;
     public DbSet<AgentSettings> AgentSettings { get; set; } = null!;
     public DbSet<HumanFeedback> HumanFeedback { get; set; } = null!;
+    public DbSet<FeedbackEntry> FeedbackEntries { get; set; } = null!;
+    public DbSet<CategoryPolicyParameter> CategoryPolicyParameters { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -62,6 +64,36 @@ public class HelpdeskDbContext : DbContext
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.TicketId).IsRequired();
             entity.Property(e => e.Timestamp).IsRequired();
+        });
+
+        // FeedbackEntry configuration (persistent feedback for learning)
+        modelBuilder.Entity<FeedbackEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.TicketId).IsRequired();
+            entity.Property(e => e.Timestamp).IsRequired();
+            entity.Property(e => e.OriginalCategory).IsRequired().HasConversion<int>();
+            entity.Property(e => e.OriginalPriority).IsRequired().HasConversion<int>();
+            entity.Property(e => e.CorrectCategory).IsRequired().HasConversion<int>();
+            entity.Property(e => e.CorrectPriority).IsRequired().HasConversion<int>();
+            entity.Property(e => e.WasCategoryCorrect).IsRequired();
+            entity.Property(e => e.WasPriorityCorrect).IsRequired();
+            entity.HasIndex(e => e.TicketId);
+        });
+
+        // CategoryPolicyParameter configuration (per-category thresholds)
+        modelBuilder.Entity<CategoryPolicyParameter>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
+            entity.Property(e => e.Category).IsRequired().HasConversion<int>();
+            entity.Property(e => e.ConfidenceThreshold).IsRequired();
+            entity.Property(e => e.TotalFeedbackCount).IsRequired();
+            entity.Property(e => e.CorrectCount).IsRequired();
+            entity.Property(e => e.IncorrectCount).IsRequired();
+            entity.Property(e => e.LastUpdated).IsRequired();
+            entity.HasIndex(e => e.Category).IsUnique();
         });
     }
 }
